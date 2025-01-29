@@ -26,7 +26,7 @@ vanilla() {                         # Installation of the Vanilla Server
         fi
 
         echo "Lade Minecraft-Server $mcversion herunter..."
-        curl -o "/$folder/server.jar" $server_url
+        curl -o "/$folder/server_$mcversion.jar" $server_url
     }
     minecraft_manifest
 
@@ -36,13 +36,13 @@ vanilla() {                         # Installation of the Vanilla Server
 
     echo "#!/bin/sh" >> /$folder/start.sh
     echo "cd /$folder" >> /$folder/start.sh
-    echo "java -Xms$memory -Xmx$memory -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:MaxGCPauseMillis=50 -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineSize=128 -XX:+OptimizeStringConcat -XX:+DisableExplicitGC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=15 -XX:+PerfDisableSharedMem -Dusing.aikars.flags=true -Dfile.encoding=UTF-8 -jar server.jar nogui" >> /$folder/start.sh
+    echo "java -Xms$memory -Xmx$memory -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:MaxGCPauseMillis=50 -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineSize=128 -XX:+OptimizeStringConcat -XX:+DisableExplicitGC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=15 -XX:+PerfDisableSharedMem -Dusing.aikars.flags=true -Dfile.encoding=UTF-8 -jar server_$mcversion.jar nogui" >> /$folder/start.sh
     echo "exit 0" >> /$folder/start.sh
 
     chmod +x /$folder/start.sh
 }
 
-folder=/$installationfolder/$servername
+folder=/$installationfolder/server/$servername
 mkdir /$folder
 
 if [[ "$1" == "vanilla" ]]; then
