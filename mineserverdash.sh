@@ -11,9 +11,13 @@ show_help() {
 
 source ./config.conf
 
-git pull "$repository_link"
-
 autostart="false"
+
+echo "Search for new version"
+
+git fetch
+git checkout -- config.conf
+git pull
 
 if [ ! -d "$installationfolder" ]; then
     echo "The installationfolder doesn't exist. Check /config.conf"
@@ -25,47 +29,28 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --install | -i)  # Beide Optionen, --install und -i, werden hier abgefangen
-            minecraftversiontype=$(get_argument "--install" "$2")
-            shift 2
-            ;;
-        --memory)
-            memorysize=$(get_argument "--memory" "$2")
-            shift 2
-            ;;
-        --servername)
-            servername=$(get_argument "--servername" "$2")
-            shift 2
-            ;;
-        --serverversion)
-            serverversion=$(get_argument "--serverversion" "$2")
-            shift 2
-            ;;
-        --autostart)
-            autostart="true"
-            shift
-            ;;
-        --help | -h)
-            show_help
-            exit 0
-            ;;
-        *)
-            echo "Unknown parameter: $1"
-            echo "Use --help for help"
-            exit 0
-            ;;
-    esac
-done
+get_arg() {
+    [[ -n "$2" && "$2" != --* ]] && eval "$3='$2'" || { echo "$1 needs an argument."; exit 1; };
+}
 
-echo "$minecraftversiontype"
-echo "$memorysize"
+[[ $# -eq 0 ]] && show_help && exit 1
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in 
+        --install|-i) get_arg "$1" "$2" minecraftversiontype; shift 2 ;;
+        --memory|-m) get_arg "$1" "$2" memorysize; shift 2 ;;
+        --servername) get_arg "$1" "$2" servername; shift 2 ;;
+        --mcversion|-v) get_arg "$1" "$2" mcversion; shift 2 ;;
+        --autostart) autostart="true"; shift ;;
+        --help|-h) show_help; exit ;;
+        *) echo "Unknown parameter: $1"; show_help; exit 1 ;;
+    esac 
+done 
 
 if [[ "$minecraftversiontype" == "vanilla" ]]; then
-    bash ./src/installer.sh vanilla "$servername" "$serverversion" "$memorysize"
+    bash ./src/installer.sh vanilla "$servername" "$mcversion" "$memorysize"
 fi
 
-if [[ "$autostart" == "true" ]]; then
-    bash ./src/autostart.sh "$servername"
-fi
+#if [[ "$autostart" == "true" ]]; then
+#    bash ./src/autostart.sh "$servername"
+#fi

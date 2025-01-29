@@ -12,7 +12,7 @@ vanilla() {                         # Installation of the Vanilla Server
     minecraft_manifest() {              # minecraft version herunterladen
         curl -s $manifest_url -o version_manifest.json
         version_url=$(jq -r --arg MC_VERSION "$mcversion" '.versions[] | select(.id == $MC_VERSION) | .url' version_manifest.json)
-    
+        rm version_manifest.json
         if [ -z "$version_url" ]; then
             echo "Die angegebene Version $mcversion wurde nicht gefunden.  ^|berpr  fe die Versionsnummer."
             exit 1
@@ -27,7 +27,6 @@ vanilla() {                         # Installation of the Vanilla Server
 
         echo "Lade Minecraft-Server $mcversion herunter..."
         curl -o "/$folder/server.jar" $server_url
-        rm version_manifest.json
     }
     minecraft_manifest
 
