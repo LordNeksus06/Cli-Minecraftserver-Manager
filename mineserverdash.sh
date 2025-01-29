@@ -15,6 +15,8 @@ show_help() {
 
 source ./config.conf
 
+autostart="false"
+
 if [ ! -d "$installationfolder" ]; then
     echo "The installationfolder doesn't exist. Check /config.conf"
     exit 0
@@ -70,6 +72,10 @@ while [[ $# -gt 0 ]]; do
                 exit 0
             fi
             ;;
+        --autostart)
+            autostart="true"
+            exit 0
+            ;;
         --help)
             show_help
             exit 0
@@ -87,4 +93,8 @@ echo "$memorysize"
 
 if [[ "$minecraftversiontype" == "vanilla" ]]; then
     bash ./src/installer.sh vanilla "$servername" "$serverversion" "$memorysize"
+fi
+
+if [[ "$autostart" == "true" ]]; then
+    bash ./src/autostart.sh "$servername"
 fi
