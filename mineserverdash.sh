@@ -9,11 +9,9 @@ show_help() {
     echo "  --help          Zeigt diese Hilfe an"
 }
 
-bash /src/updater.sh
-
-
-
 source ./config.conf
+
+git pull "$repository_link"
 
 autostart="false"
 
@@ -29,54 +27,27 @@ fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --install)
-            if [[ -n "$2" && "$2" != --* ]]; then
-                case "$2" in
-                    vanilla)
-                        minecraftversiontype="$2"
-                        shift 2
-                        ;;
-                    *)
-                        echo "the type of minecraft doesn't exist."
-                        exit 0
-                esac
-            else
-                echo "Failure! --install needs an Argument"
-                exit 0
-            fi
+        --install | -i)  # Beide Optionen, --install und -i, werden hier abgefangen
+            minecraftversiontype=$(get_argument "--install" "$2")
+            shift 2
             ;;
         --memory)
-            if [[ -n "$2" && "$2" != --* ]]; then
-                memorysize="$2"
-                shift 2
-            else
-                echo "Failure! --memory needs an Argument"
-                exit 0
-            fi
+            memorysize=$(get_argument "--memory" "$2")
+            shift 2
             ;;
         --servername)
-            if [[ -n "$2" && "$2" != --* ]]; then
-                servername="$2"
-                shift 2
-            else
-                echo "Failure! --servername needs an Argument"
-                exit 0
-            fi
+            servername=$(get_argument "--servername" "$2")
+            shift 2
             ;;
         --serverversion)
-            if [[ -n "$2" && "$2" != --* ]]; then
-                serverversion="$2"
-                shift 2
-            else
-                echo "Failure! --serverversion needs an Argument"
-                exit 0
-            fi
+            serverversion=$(get_argument "--serverversion" "$2")
+            shift 2
             ;;
         --autostart)
             autostart="true"
-            exit 0
+            shift
             ;;
-        --help)
+        --help | -h)
             show_help
             exit 0
             ;;
