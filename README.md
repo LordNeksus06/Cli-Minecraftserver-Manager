@@ -3,9 +3,9 @@ A simple commandline tool based on shell script to manage and install minecraft 
 
 In work:
 
-Backups of servers
-autostart
-automatic update of the script
+  - Backups of servers
+  - autostart
+  - automatic update of the script
 
 
 Status:
