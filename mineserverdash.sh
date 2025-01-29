@@ -9,7 +9,7 @@ show_help() {
     echo "  --help          Zeigt diese Hilfe an"
 }
 
-
+bash /src/updater.sh
 
 
 
