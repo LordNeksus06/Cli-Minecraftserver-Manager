@@ -4,17 +4,21 @@
 
 source ./config.conf
 
+memorysize="$1"
 servername="$2"
 mcversion="$3"
-memory="$4"
+mctype="$4"
+
+echo "$@"
 
 vanilla() {                         # Installation of the Vanilla Server
     minecraft_manifest() {              # minecraft version herunterladen
         curl -s $manifest_url -o version_manifest.json
         version_url=$(jq -r --arg MC_VERSION "$mcversion" '.versions[] | select(.id == $MC_VERSION) | .url' version_manifest.json)
+        echo "$version_url"
         rm version_manifest.json
         if [ -z "$version_url" ]; then
-            echo "Die angegebene Version $mcversion wurde nicht gefunden.  ^|berpr  fe die Versionsnummer."
+            echo "The selected version $mcversion could not be found"
             exit 1
         fi
 
@@ -45,8 +49,8 @@ vanilla() {                         # Installation of the Vanilla Server
 folder=/$installationfolder/server/$servername
 mkdir /$folder
 
-if [[ "$1" == "vanilla" ]]; then
-    echo "Installing the vannila server"
+if [[ "$mctype" == "vanilla" ]]; then
+    echo "Installing the vanilla server"
     vanilla
 fi
 
