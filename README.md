@@ -6,6 +6,8 @@ In work:
   - Backups of servers
   - autostart
   - automatic update of the script
+  - dependencies
+  - world export/import
 
 
 Status:
