@@ -57,7 +57,7 @@ install() {
 }
 
 backup() {
-    echo "Backup causes a server stop to prevent data corruption in the backup files. Do you want to start the Server after the Backup? (Y/n)" start_after_backup
+    echo "Backup causes a server stop to prevent data corruption in the backup files. Do you want to start the Server after the Backup? (Y/n): " start_after_backup
 
     if [[ "$servername" == "" ]]; then
         echo "You haven't specified the server! Please select one of the following"
@@ -78,6 +78,71 @@ backup() {
         systemctl start $servername
         echo "Server starts"
     fi
+}
+
+start_server() {
+    if [[ "$servername" == "" ]]; then
+        read -p "You haven't specified a server name! Please select one: " servername
+    fi
+
+    systemctl start $servername.service
+}
+
+remove_server() {
+
+    read -p "Do you really want to remove the Server? (Y/n): " antwort
+
+    if [[ "${antwort,,}" =~ ^(y|j)$ ]]; then
+        if [[ "$servername" == "" ]]; then
+            read -p "You haven't specified a server name! Please select one: " servername
+        fi
+
+        systemctl stop $servername.service
+        systemctl disable $servername.service
+
+        rm /etc/systemd/system/$servername.service
+        rm -r /$installationfolder/cli-minecraftserver-manager/server/$servername
+    else
+        echo "Deletion stopped"
+        exit 0
+    fi
+
+   
+}
+
+server_status() {
+
+    IFS=$'\n' read -d '' -r -a server_array < <(find "/$installationfolder/cli-minecraftserver-manager/server" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
+
+    echo ""
+    echo "-----------------------------------------------"
+
+    for server in "${server_array[@]}"; do
+
+        status_server_status="$(systemctl is-active $server.service)"
+        cpu_server_status=$(systemctl show -p MainPID --value $server)
+
+        if [[ "$status_server_status" == "active" ]]; then
+            cpu_usage="$(ps -p $cpu_server_status -o %cpu --no-headers | awk '{$1=$1};1')"
+
+            memory_usage_bytes="$(systemctl show -p MemoryCurrent --value $server)"
+            memory_server_status=$(echo "scale=2; $memory_usage_bytes / 1024 / 1024" | bc)
+        else
+            memory_server_status=0
+            cpu_usage="0.0"
+        fi
+
+        if [ "$status_server_status" == "active" ]; then
+            color="\033[1;32m"  # Geen for "active"
+        else
+            color="\033[1;31m"  # Red for "inactive"
+        fi
+
+        echo -e "$server   $color$status_server_status\033[0m   CPU usage: $cpu_usage%  Memory: $memory_server_status MB"
+    done
+    echo "-----------------------------------------------"
+    echo ""
+    echo "The CPU usage is shown in percent. 100% cpu usage means 1 thread is fully utilized. 200% means 2 Threads are fully utilized and so on"
 }
 
 source ./config.conf
@@ -119,16 +184,19 @@ fi
 
 # ============== preperation finished ================
 
-first_argument="$1"
+check_root
 
 case "$1" in                                                                                                                # What is the first argument
-    install) check_root; shift; arguments "$@"; install;;
-    backup) check_root; systemd_configuration; shift;;
+    install) shift; arguments "$@"; install;;
+    backup) systemd_configuration; shift;;
+    start) start_server; shift;;
+    remove) remove_server; shift;;
+    status) server_status; shift;;
     *) echo "The Argument $1 doesn't exist"; show_help; exit 1;;
 esac
 
 # Autostart at installation
 
-if [[ "$autostart" == "true" && "$first_argument" == "install" ]]; then
+if [[ "$autostart" == "true" && "$1" == "install" ]]; then
     systemctl enable $servername.service
 fi
