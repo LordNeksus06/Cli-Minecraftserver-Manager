@@ -9,6 +9,13 @@ show_help() {
     echo "  --help          Zeigt diese Hilfe an"
 }
 
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "Das Skript wird ohne root-Rechte ausgeführt. Bitte mit sudo ausführen!"
+        exit 1
+    fi
+}
+
 arguments() {
     get_arg() {
         [[ -n "$2" && "$2" != -* ]] && eval "$3='$2'" || { echo "$1 needs an argument."; exit 1; };
@@ -45,9 +52,13 @@ install() {
     fi
 
     bash ./src/installer.sh "$memorysize" "$servername" "$mcversion" "$mctype"
+
+    bash ./src/systemd.sh $servername
 }
 
 backup() {
+    echo "Backup causes a server stop to prevent data corruption in the backup files. Do you want to start the Server after the Backup? (Y/n)" start_after_backup
+
     if [[ "$servername" == "" ]]; then
         echo "You haven't specified the server! Please select one of the following"
         echo "--------------------------------------------"
@@ -59,7 +70,14 @@ backup() {
         read -p "Select the Server: " servername
     fi
 
+    systemctl stop $servername.service
+
     bash ./src/backup.sh "$servername"
+
+    if [[ "${antwort,,}" =~ ^(y|j)$ ]]; then
+        systemctl start $servername
+        echo "Server starts"
+    fi
 }
 
 source ./config.conf
@@ -72,11 +90,9 @@ if [ "$password" == "" ]; then                                                  
 fi
 
 if ! id "climinecraftservermanager" &>/dev/null; then
-    useradd -p "$password" -s /bin/bash climinecraftservermanager
-    if [[ $? -ne 0 ]]; then
-        echo "The script couldn't create a new user. Are you executing this script as root? Root is needed to create a new user to run the minecraft server to make it more secure."
-        exit 2
-    fi
+    check_root
+    password_encrypted=$(openssl passwd -6 "$password")
+    useradd -p "$password_encrypted" -s /bin/bash climinecraftservermanager
 fi
 
 if [ ! -d "$installationfolder" ]; then                                                                                     # Check the installationfolder
@@ -106,15 +122,13 @@ fi
 first_argument="$1"
 
 case "$1" in                                                                                                                # What is the first argument
-    install) shift; arguments "$@"; install;;
-    backup) backup; shift;;
+    install) check_root; shift; arguments "$@"; install;;
+    backup) check_root; systemd_configuration; shift;;
     *) echo "The Argument $1 doesn't exist"; show_help; exit 1;;
 esac
-
-# ============== preperation finished ================
 
 # Autostart at installation
 
 if [[ "$autostart" == "true" && "$first_argument" == "install" ]]; then
-    bash ./src/autostart.sh $servername
+    systemctl enable $servername.service
 fi

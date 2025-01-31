@@ -23,8 +23,6 @@ WantedBy=multi-user.target
 EOF
 
     systemctl daemon-reload
-    systemctl enable $servername.service
-    systemctl start $servername.service
 else
     echo "Autostart can't be enabled. Autostart is based on systemd. Are you using a supported Distro?"
 fi
