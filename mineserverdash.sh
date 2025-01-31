@@ -52,7 +52,7 @@ backup() {
         echo "You haven't specified the server! Please select one of the following"
         echo "--------------------------------------------"
         
-        ls /$installationfolder/server
+        ls /$installationfolder/cli-minecraftserver-manager/server
 
         echo "--------------------------------------------"
 
@@ -64,17 +64,36 @@ backup() {
 
 source ./config.conf
 
+# ============== preperation ================
+
+if [ "$password" == "" ]; then                                                                                     # Check the installationfolder
+    random_value=$(cat /dev/urandom | tr -dc "$charset" | fold -w 12 | head -n 1)
+    sed -i "s/^password=\".*\"$/password=\"$random_value\"/" config.conf
+fi
+
+if ! id "climinecraftservermanager" &>/dev/null; then
+    useradd -p "$password" -s /bin/bash climinecraftservermanager
+    if [[ $? -ne 0 ]]; then
+        echo "The script couldn't create a new user. Are you executing this script as root? Root is needed to create a new user to run the minecraft server to make it more secure."
+        exit 2
+    fi
+fi
+
 if [ ! -d "$installationfolder" ]; then                                                                                     # Check the installationfolder
     echo "The installationfolder doesn't exist. Check /config.conf"
     exit 0
 fi
 
-if [ ! -d "$installationfolder/server" ]; then                                                                                     # Check the installationfolder
-    mkdir $installationfolder/server
+if [ ! -d "$installationfolder/cli-minecraftserver-manager" ]; then                                                                                     # Check the installationfolder
+    mkdir $installationfolder/cli-minecraftserver-manager
 fi
 
-if [ ! -d "$installationfolder/backups" ]; then                                                                                     # Check the installationfolder
-    mkdir $installationfolder/backups
+if [ ! -d "$installationfolder/cli-minecraftserver-manager/server" ]; then                                                                                     # Check the installationfolder
+    mkdir $installationfolder/cli-minecraftserver-manager/server
+fi
+
+if [ ! -d "$installationfolder/cli-minecraftserver-manager/backups" ]; then                                                                                     # Check the installationfolder
+    mkdir $installationfolder/cli-minecraftserver-manager/backups
 fi
 
 if [ $# -eq 0 ]; then                                                                                                       # Check the command
@@ -82,8 +101,20 @@ if [ $# -eq 0 ]; then                                                           
     exit 1
 fi
 
+# ============== preperation finished ================
+
+first_argument="$1"
+
 case "$1" in                                                                                                                # What is the first argument
     install) shift; arguments "$@"; install;;
     backup) backup; shift;;
     *) echo "The Argument $1 doesn't exist"; show_help; exit 1;;
 esac
+
+# ============== preperation finished ================
+
+# Autostart at installation
+
+if [[ "$autostart" == "true" && "$first_argument" == "install" ]]; then
+    bash ./src/autostart.sh $servername
+fi

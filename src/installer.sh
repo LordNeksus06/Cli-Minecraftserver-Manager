@@ -39,19 +39,25 @@ vanilla() {                         # Installation of the Vanilla Server
     echo "eula=true" > /$folder/eula.txt 
 
     echo "#!/bin/sh" >> /$folder/start.sh
-    echo "cd /$folder" >> /$folder/start.sh
-    echo "java -Xms$memory -Xmx$memory -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:MaxGCPauseMillis=50 -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineSize=128 -XX:+OptimizeStringConcat -XX:+DisableExplicitGC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=15 -XX:+PerfDisableSharedMem -Dusing.aikars.flags=true -Dfile.encoding=UTF-8 -jar server_$mcversion.jar nogui" >> /$folder/start.sh
+    echo "java -Xms$memorysize -Xmx$memorysize -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:MaxGCPauseMillis=50 -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineSize=128 -XX:+OptimizeStringConcat -XX:+DisableExplicitGC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=15 -XX:+PerfDisableSharedMem -Dusing.aikars.flags=true -Dfile.encoding=UTF-8 -jar server_$mcversion.jar nogui" >> /$folder/start.sh
     echo "exit 0" >> /$folder/start.sh
 
     chmod +x /$folder/start.sh
 }
 
-folder=/$installationfolder/server/$servername
+folder=/$installationfolder/cli-minecraftserver-manager/server/$servername
 mkdir /$folder
 
 if [[ "$mctype" == "vanilla" ]]; then
     echo "Installing the vanilla server"
     vanilla
+fi
+
+chown -R climinecraftservermanager:climinecraftservermanager "$folder"
+if [[ $? -ne 0 ]]; then
+    echo "The script couldn't set the rights to the servermanager user. Are you executing this script as root? Root is needed to create a new user to run the minecraft server to make it more secure."
+    rm -r $folder
+    exit 2
 fi
 
 exit 0
