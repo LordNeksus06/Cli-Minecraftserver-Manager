@@ -4,10 +4,9 @@
 
 source ./config.conf
 
-memorysize="$1"
-servername="$2"
-mcversion="$3"
-mctype="$4"
+servername="$1"
+mcversion="$2"
+mctype="$3"
 
 echo "$@"
 
@@ -25,7 +24,7 @@ vanilla() {                         # Installation of the Vanilla Server
         server_url=$(curl -s $version_url | jq -r '.downloads.server.url')
 
         if [ -z "$server_url" ]; then
-            echo "F  r die Version $mcversion ist keine Server-JAR verf  gbar."
+            echo "It is no $mcversion version available"
             exit 1
         fi
 
@@ -37,13 +36,6 @@ vanilla() {                         # Installation of the Vanilla Server
     # Configuration of the server
 
     echo "eula=true" > /$folder/eula.txt 
-
-    echo "#!/bin/sh" >> /$folder/start.sh
-    echo "cd /$folder" >> /$folder/start.sh
-    echo "java -Xms$memorysize -Xmx$memorysize -XX:+UseG1GC -XX:G1HeapRegionSize=8M -XX:MaxGCPauseMillis=50 -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineSize=128 -XX:+OptimizeStringConcat -XX:+DisableExplicitGC -XX:ParallelGCThreads=4 -XX:ConcGCThreads=2 -XX:InitiatingHeapOccupancyPercent=15 -XX:+PerfDisableSharedMem -Dusing.aikars.flags=true -Dfile.encoding=UTF-8 -jar server_$mcversion.jar nogui" >> /$folder/start.sh
-    echo "exit 0" >> /$folder/start.sh
-
-    chmod +x /$folder/start.sh
 }
 
 folder=/$installationfolder/cli-minecraftserver-manager/server/$servername

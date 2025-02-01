@@ -51,9 +51,9 @@ install() {
         read -p "You haven't specified a type of minecraft! Please select one (e.g. vanilla, forge): " mctype
     fi
 
-    bash ./src/installer.sh "$memorysize" "$servername" "$mcversion" "$mctype"
+    bash ./src/installer.sh "$servername" "$mcversion" "$mctype"
 
-    bash ./src/systemd.sh $servername
+    bash ./src/systemd.sh $servername "$memorysize" "$mcversion"
 }
 
 backup() {
@@ -112,6 +112,8 @@ remove_server() {
 
 server_status() {
 
+    total_load="0"
+
     IFS=$'\n' read -d '' -r -a server_array < <(find "/$installationfolder/cli-minecraftserver-manager/server" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;)
 
     echo ""
@@ -120,10 +122,10 @@ server_status() {
     for server in "${server_array[@]}"; do
 
         status_server_status="$(systemctl is-active $server.service)"
-        cpu_server_status=$(systemctl show -p MainPID --value $server)
+        cpu_server_status=$(systemctl show -p MainPID --value $server.service)
 
         if [[ "$status_server_status" == "active" ]]; then
-            cpu_usage="$(ps -p $cpu_server_status -o %cpu --no-headers | awk '{$1=$1};1')"
+            cpu_usage="$(top -b -n 1 -p $cpu_server_status | tail -n +8 | head -n 1 | awk '{print $9}')"
 
             memory_usage_bytes="$(systemctl show -p MemoryCurrent --value $server)"
             memory_server_status=$(echo "scale=2; $memory_usage_bytes / 1024 / 1024" | bc)
@@ -139,10 +141,13 @@ server_status() {
         fi
 
         echo -e "$server   $color$status_server_status\033[0m   CPU usage: $cpu_usage%  Memory: $memory_server_status MB"
+        
+        total_cpu_load=($total_load + $cpu_usage)
     done
+    echo ""
+    echo "Total load    CPU usage: $total_cpu_load"
     echo "-----------------------------------------------"
     echo ""
-    echo "The CPU usage is shown in percent. 100% cpu usage means 1 thread is fully utilized. 200% means 2 Threads are fully utilized and so on"
 }
 
 source ./config.conf
